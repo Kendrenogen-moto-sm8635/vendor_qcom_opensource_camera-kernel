@@ -230,6 +230,9 @@ def _define_module(target, variant, lunch_target=None):
                     "drivers/cam_sensor_module/cam_flash/cam_flash_core.c",
                     "drivers/cam_sensor_module/cam_flash/cam_flash_soc.c",
                     "drivers/cam_sensor_module/cam_sensor_module_debug.c",
+                    "drivers/cam_sensor_module/cam_actuator/mot_actuator.c",
+                    "drivers/cam_sensor_module/cam_actuator/mot_actuator_policy.c",
+                    "drivers/cam_sensor_module/cam_actuator/mot_ois.c",
                 ],
             },
             "CONFIG_CCI_DEBUG_INTF": {
