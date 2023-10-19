@@ -20,6 +20,7 @@
 
 #ifdef CONFIG_MOT_OIS_EARLY_UPGRADE_FW
 extern int32_t sem1217s_fw_update(struct cam_ois_ctrl_t *o_ctrl, const struct firmware *fw);
+extern int32_t dw9784_fw_update(struct cam_ois_ctrl_t *o_ctrl, const struct firmware *fw);
 #endif
 
 #ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
@@ -1082,14 +1083,40 @@ static int mot_ois_fw_prog_download_early(struct cam_ois_ctrl_t *o_ctrl)
 		for (i = 0; i < 3; i++) {
 			rc = sem1217s_fw_update(o_ctrl, fw);
 			if (rc == 0) {
-				CAM_INFO(CAM_OIS, "FW upgrade checked success");
+				CAM_INFO(CAM_OIS, "sem1217 FW upgrade checked success");
 				break;
 			}
-			CAM_WARN(CAM_OIS, "FW upgrade checked try again, i %d, rc %d", i, rc);
+			CAM_WARN(CAM_OIS, "sem1217 FW upgrade checked try again, i %d, rc %d", i, rc);
 		}
 
 		if (rc != 0) {
-			CAM_ERR(CAM_OIS, "FW upgrade checked failed");
+			CAM_ERR(CAM_OIS, "sem1217 FW upgrade checked failed");
+		}
+
+		release_firmware(fw);
+		mutex_unlock(&o_ctrl->ois_early_fw_mutex);
+		return rc;
+	}
+
+	if (strstr(o_ctrl->ois_name, "dw9784")) {
+		rc = request_firmware(&fw, fw_name_prog, dev);
+		if (rc) {
+			CAM_ERR(CAM_OIS, "Failed to locate %s", fw_name_prog);
+			return rc;
+		}
+
+		mutex_lock(&o_ctrl->ois_early_fw_mutex);
+		for (i = 0; i < 1; i++) {
+			rc = dw9784_fw_update(o_ctrl, fw);
+			if (rc == 0) {
+				CAM_INFO(CAM_OIS, "dw9784 FW upgrade checked success");
+				break;
+			}
+			CAM_WARN(CAM_OIS, "dw9784 FW upgrade checked try again, i %d, rc %d", i, rc);
+		}
+
+		if (rc != 0) {
+			CAM_ERR(CAM_OIS, "dw9784 FW upgrade checked failed");
 		}
 
 		release_firmware(fw);

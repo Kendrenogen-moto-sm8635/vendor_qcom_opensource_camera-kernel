@@ -247,7 +247,10 @@ def _define_module(target, variant, lunch_target=None):
                 True: ["drivers/cam_utils/cam_soc_bus.c"],
             },
             "CONFIG_MOT_OIS_EARLY_UPGRADE_FW": {
-                True: ["drivers/cam_sensor_module/cam_ois/cam_ois_sem1217s.c"],
+                True: [
+                    "drivers/cam_sensor_module/cam_ois/cam_ois_sem1217s.c",
+                    "drivers/cam_sensor_module/cam_ois/cam_ois_dw9784.c",
+                ],
             },
             "CONFIG_CAM_PRESIL": {
                 # Sources need to be available to specify
