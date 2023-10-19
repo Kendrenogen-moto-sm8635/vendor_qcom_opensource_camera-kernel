@@ -22,6 +22,10 @@
 extern int32_t sem1217s_fw_update(struct cam_ois_ctrl_t *o_ctrl, const struct firmware *fw);
 #endif
 
+#ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
+int g_ois_init_finished = 0;
+#endif
+
 static inline uint64_t swap_high_byte_and_low_byte(uint8_t *src,
 	uint8_t size_bytes)
 {
@@ -238,6 +242,10 @@ static int cam_ois_power_down(struct cam_ois_ctrl_t *o_ctrl)
 		CAM_ERR(CAM_OIS, "power down the core is failed:%d", rc);
 		return rc;
 	}
+
+#ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
+	g_ois_init_finished = 0;
+#endif
 
 	camera_io_release(&o_ctrl->io_master_info);
 	o_ctrl->cam_ois_state = CAM_OIS_ACQUIRE;
@@ -1384,6 +1392,10 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 		} else {
 			CAM_DBG(CAM_OIS, "apply Init settings success");
 		}
+
+#ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
+		g_ois_init_finished = 1;
+#endif
 
 		if (o_ctrl->is_ois_calib) {
 			rc = cam_ois_apply_settings(o_ctrl,
