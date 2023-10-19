@@ -195,6 +195,10 @@ static int cam_ois_power_up(struct cam_ois_ctrl_t *o_ctrl)
 		return rc;
 	}
 
+#ifdef CONFIG_MOT_OIS_DRIVER
+	CAM_INFO(CAM_OIS, "OIS Power up successfully");
+#endif
+
 	rc = camera_io_init(&o_ctrl->io_master_info);
 	if (rc) {
 		CAM_ERR(CAM_OIS, "cci_init failed: rc: %d", rc);
@@ -246,6 +250,10 @@ static int cam_ois_power_down(struct cam_ois_ctrl_t *o_ctrl)
 
 #ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
 	g_ois_init_finished = 0;
+#endif
+
+#ifdef CONFIG_MOT_OIS_DRIVER
+	CAM_INFO(CAM_OIS, "OIS power down successed");
 #endif
 
 	camera_io_release(&o_ctrl->io_master_info);
@@ -1755,7 +1763,9 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 		goto end;
 
 pwr_dwn:
+#ifndef CONFIG_MOT_OIS_DRIVER
 	cam_ois_power_down(o_ctrl);
+#endif
 end:
 	cam_common_mem_free(csl_packet);
 put_ref:
