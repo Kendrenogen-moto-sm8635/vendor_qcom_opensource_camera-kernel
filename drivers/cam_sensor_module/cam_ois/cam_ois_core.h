@@ -13,6 +13,13 @@
 #define OIS_ENDIANNESS_MASK_FW              0x0F
 #define OIS_ENDIANNESS_MASK_INPUTPARAM      0xF0
 
+#ifdef CONFIG_MOT_OIS_EARLY_UPGRADE_FW
+#define CAM_OIS_PACKET_OPCODE_OIS_FW_UPGRADE   20     /* keep same with HAL opcode CSLPacketOpcodesOisFwUpgrade */
+
+#define QCOM_OIS_FW_DL_FLAG                    1
+#define MOT_OIS_FW_DL_FLAG                     2
+#define MOT_OIS_FW_DL_EARLY_FLAG               3
+#endif
 
 /**
  * @power_info: power setting info to control the power
