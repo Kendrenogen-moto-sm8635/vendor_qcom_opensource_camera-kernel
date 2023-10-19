@@ -387,6 +387,9 @@ static int cam_ois_component_bind(struct device *dev,
 	INIT_LIST_HEAD(&(o_ctrl->i2c_mode_data.list_head));
 	INIT_LIST_HEAD(&(o_ctrl->i2c_time_data.list_head));
 	mutex_init(&(o_ctrl->ois_mutex));
+#ifdef CONFIG_MOT_OIS_EARLY_UPGRADE_FW
+	mutex_init(&(o_ctrl->ois_early_fw_mutex));
+#endif
 	rc = cam_ois_driver_soc_init(o_ctrl);
 	if (rc) {
 		CAM_ERR(CAM_OIS, "failed: soc init rc %d", rc);
