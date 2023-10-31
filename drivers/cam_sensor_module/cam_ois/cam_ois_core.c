@@ -1565,6 +1565,7 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 				CAM_INFO(CAM_OIS, "default cmd %d", cmm_hdr->cmd_type);
 				break;
 			}
+			cam_mem_put_cpu_buf(cmd_desc[i].mem_handle);
 		}
 
 		if (o_ctrl->cam_ois_state != CAM_OIS_CONFIG) {
@@ -1580,7 +1581,6 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 		if (o_ctrl->ois_fw_flag == MOT_OIS_FW_DL_EARLY_FLAG) {
 			CAM_INFO(CAM_OIS, "OIS early fw update enabled");
 			rc = mot_ois_fw_prog_download(o_ctrl);
-			return rc;
 		}
 	}
 	break;
