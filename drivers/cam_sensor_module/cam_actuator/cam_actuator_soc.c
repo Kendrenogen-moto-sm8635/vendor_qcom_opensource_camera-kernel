@@ -49,7 +49,7 @@ int32_t cam_actuator_parse_dt(struct cam_actuator_ctrl_t *a_ctrl,
 	} else {
 		a_ctrl->af_ois_use_same_ic = true;
 	}
-	CAM_DBG(CAM_ACTUATOR, "af_ois_use_same_ic %d", a_ctrl->af_ois_use_same_ic);
+	CAM_INFO(CAM_ACTUATOR, "af_ois_use_same_ic %d", a_ctrl->af_ois_use_same_ic);
 #endif
 
 	if (a_ctrl->io_master_info.master_type == CCI_MASTER) {

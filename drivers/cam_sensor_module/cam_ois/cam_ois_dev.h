@@ -124,6 +124,9 @@ struct cam_ois_ctrl_t {
 #ifdef CONFIG_MOT_OIS_EARLY_UPGRADE_FW
 	struct mutex ois_early_fw_mutex;
 #endif
+#ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
+	bool af_ois_use_same_ic;
+#endif
 	struct cam_cmd_ois_fw_info fw_info;
 	struct i2c_settings_array i2c_fw_init_data[MAX_OIS_FW_COUNT];
 	struct i2c_settings_array i2c_fw_finalize_data[MAX_OIS_FW_COUNT];

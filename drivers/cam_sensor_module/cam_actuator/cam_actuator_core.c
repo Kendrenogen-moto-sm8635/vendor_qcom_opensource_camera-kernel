@@ -13,7 +13,7 @@
 #include "cam_packet_util.h"
 
 #ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
-extern int g_ois_init_finished;
+extern atomic_t g_ois_init_finished;
 #endif
 
 int32_t cam_actuator_construct_default_power_setting(
@@ -259,8 +259,8 @@ int32_t cam_actuator_apply_settings(struct cam_actuator_ctrl_t *a_ctrl,
 	int32_t rc = 0;
 
 #ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
-	if (a_ctrl->af_ois_use_same_ic == true &&
-		g_ois_init_finished == 0) {
+	if ((a_ctrl->af_ois_use_same_ic == true) &&
+		(atomic_read(&g_ois_init_finished) == 0)) {
 			CAM_INFO(CAM_ACTUATOR, "OIS does't finish to init, skip writed AF setting to avoid break AF function");
 			return 0;
 	}
