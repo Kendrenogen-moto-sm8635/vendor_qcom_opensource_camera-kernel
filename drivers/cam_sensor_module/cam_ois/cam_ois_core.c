@@ -27,6 +27,10 @@ extern int32_t dw9784_fw_update(struct cam_ois_ctrl_t *o_ctrl, const struct firm
 atomic_t g_ois_init_finished = ATOMIC_INIT(0);
 #endif
 
+#ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
+atomic_t m_ois_init = ATOMIC_INIT(0);
+#endif
+
 static inline uint64_t swap_high_byte_and_low_byte(uint8_t *src,
 	uint8_t size_bytes)
 {
@@ -251,6 +255,13 @@ static int cam_ois_power_down(struct cam_ois_ctrl_t *o_ctrl)
 #ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
 	if (o_ctrl->af_ois_use_same_ic == true) {
 		atomic_set(&g_ois_init_finished, 0);
+	}
+#endif
+
+#ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
+	// TODO: deal with dual OIS (dw9784+dw9784) both need apply af drift
+	if (!strcmp(o_ctrl->ois_name, "mot_dw9784")) {
+		atomic_set(&m_ois_init, 0);
 	}
 #endif
 
@@ -1441,6 +1452,12 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 #ifdef CONFIG_MOT_OIS_AF_USE_SAME_IC
 		if (o_ctrl->af_ois_use_same_ic == true) {
 			atomic_set(&g_ois_init_finished, 1);
+		}
+#endif
+
+#ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
+		if (!strcmp(o_ctrl->ois_name, "mot_dw9784")) {
+			atomic_set(&m_ois_init, 1);
 		}
 #endif
 

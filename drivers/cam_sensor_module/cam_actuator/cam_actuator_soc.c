@@ -52,6 +52,15 @@ int32_t cam_actuator_parse_dt(struct cam_actuator_ctrl_t *a_ctrl,
 	CAM_INFO(CAM_ACTUATOR, "af_ois_use_same_ic %d", a_ctrl->af_ois_use_same_ic);
 #endif
 
+#ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
+	if (!of_property_read_bool(of_node, "af-drift-support")) {
+		a_ctrl->af_drift_supported = false;
+	} else {
+		a_ctrl->af_drift_supported = true;
+	}
+	CAM_INFO(CAM_ACTUATOR, "af-drift-support %d", a_ctrl->af_drift_supported);
+#endif
+
 	if (a_ctrl->io_master_info.master_type == CCI_MASTER) {
 		rc = of_property_read_u32(of_node, "cci-master",
 			&(a_ctrl->cci_i2c_master));
