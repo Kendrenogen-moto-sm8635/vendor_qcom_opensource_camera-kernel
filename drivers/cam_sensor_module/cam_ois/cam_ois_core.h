@@ -25,6 +25,9 @@
 #ifdef CONFIG_MOT_OIS_AF_DRIFT
 #define MOT_CAM_OIS_PACKET_OPCODE_AF_DRIFT          21     /* keep same with HAL opcode MotCSLPacketOpcodesOisAfDrift */
 #endif
+#ifdef CONFIG_MOT_OIS_AFTER_SALES_SERVICE
+#define	MOT_CAM_OIS_PACKET_OPCODE_OIS_GYRO_OFFSET   22     /* keep same with HAL opcode MotCSLPacketOpcodesOisGyroOffset */
+#endif
 
 /**
  * @power_info: power setting info to control the power
