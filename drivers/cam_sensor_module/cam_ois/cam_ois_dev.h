@@ -137,7 +137,12 @@ struct cam_ois_ctrl_t {
 	struct i2c_settings_array i2c_fw_init_data[MAX_OIS_FW_COUNT];
 	struct i2c_settings_array i2c_fw_finalize_data[MAX_OIS_FW_COUNT];
 	struct i2c_settings_array i2c_fw_version_data;
+
+#ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
+        bool af_drift_supported;
+#endif
 };
+
 
 /**
  * @brief : API to register OIS hw to platform framework.

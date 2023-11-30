@@ -455,7 +455,10 @@ static int cam_ois_component_bind(struct device *dev,
 	init_completion(&g_i3c_ois_data[o_ctrl->soc_info.index].probe_complete);
 
 #ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
-	g_o_ctrl = o_ctrl;
+	if (o_ctrl->af_drift_supported == true)
+	{
+		g_o_ctrl = o_ctrl;
+	}
 #endif
 
 	CAM_DBG(CAM_OIS, "Component bound successfully");

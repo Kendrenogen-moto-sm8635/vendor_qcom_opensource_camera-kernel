@@ -259,8 +259,8 @@ static int cam_ois_power_down(struct cam_ois_ctrl_t *o_ctrl)
 #endif
 
 #ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
-	// TODO: deal with dual OIS (dw9784+dw9784) both need apply af drift
-	if (!strcmp(o_ctrl->ois_name, "mot_dw9784")) {
+	// TODO: deal with one of dual OIS  need apply af drift
+	if (o_ctrl->af_drift_supported == true) {
 		atomic_set(&m_ois_init, 0);
 	}
 #endif
@@ -1456,7 +1456,7 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 #endif
 
 #ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
-		if (!strcmp(o_ctrl->ois_name, "mot_dw9784")) {
+		if (o_ctrl->af_drift_supported == true) {
 			atomic_set(&m_ois_init, 1);
 		}
 #endif

@@ -59,6 +59,15 @@ static int cam_ois_get_dt_data(struct cam_ois_ctrl_t *o_ctrl)
 	CAM_INFO(CAM_OIS, "af_ois_use_same_ic %d", o_ctrl->af_ois_use_same_ic);
 #endif
 
+#ifdef CONFIG_MOT_DONGWOON_OIS_AF_DRIFT
+	if (!of_property_read_bool(of_node, "af-drift-support")) {
+		o_ctrl->af_drift_supported = false;
+	} else {
+		o_ctrl->af_drift_supported = true;
+	}
+	CAM_WARN(CAM_OIS, "af-drift-support %d", o_ctrl->af_drift_supported);
+#endif
+
 	/* Initialize regulators to default parameters */
 	for (i = 0; i < soc_info->num_rgltr; i++) {
 		soc_info->rgltr[i] = devm_regulator_get(soc_info->dev,
