@@ -1828,7 +1828,16 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 				(o_ctrl->fw_info.endianness & OIS_ENDIANNESS_MASK_INPUTPARAM) >> 4;
 			rc = cam_ois_update_time(i2c_reg_settings, ois_endianness);
 		} else
-			rc = cam_ois_update_time(i2c_reg_settings, CAM_ENDIANNESS_LITTLE);
+#ifdef CONFIG_MOT_OIS_DW9784_DRIVER
+                {
+                        if (strstr(o_ctrl->ois_name, "dw9784"))
+				rc = cam_ois_update_time(i2c_reg_settings, CAM_ENDIANNESS_BIG);
+			else
+				rc = cam_ois_update_time(i2c_reg_settings, CAM_ENDIANNESS_LITTLE);
+		}
+#else
+		                rc = cam_ois_update_time(i2c_reg_settings, CAM_ENDIANNESS_LITTLE);
+#endif
 		if (rc < 0) {
 			CAM_ERR(CAM_OIS, "Cannot update time");
 			goto end;
