@@ -160,8 +160,9 @@ int32_t sem1217s_fw_update(struct cam_ois_ctrl_t *o_ctrl, const struct firmware 
 
 	new_fw_ver = *(uint32_t *)(pFwData + (fw->size - 12));
 
-	if (current_fw_ver == new_fw_ver) {
-		CAM_INFO(CAM_OIS, "Skip FW upgrade, current_fw_ver 0x%x, new_fw_ver 0x%x", current_fw_ver, new_fw_ver);
+	if (current_fw_ver == new_fw_ver ||
+            current_fw_ver > new_fw_ver) {
+		CAM_INFO(CAM_OIS, "Skip firmware upgrade, current_fw_ver 0x%x, new_fw_ver 0x%x", current_fw_ver, new_fw_ver);
 		return 0;
 	}
 
