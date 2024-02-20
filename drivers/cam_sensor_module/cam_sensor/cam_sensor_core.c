@@ -678,6 +678,14 @@ int32_t cam_sensor_update_slave_info(void *probe_info,
 
 		s_ctrl->sensor_probe_addr_type = sensor_probe_info->addr_type;
 		s_ctrl->sensor_probe_data_type = sensor_probe_info->data_type;
+
+		s_ctrl->probe_sub_device       = sensor_probe_info->probe_sub_device;
+		s_ctrl->sub_device_addr        = sensor_probe_info->sub_device_addr;
+		s_ctrl->sub_device_data_type   = sensor_probe_info->sub_device_data_type;
+		s_ctrl->sub_device_addr_type   = sensor_probe_info->sub_device_addr_type;
+		s_ctrl->sub_device_id_addr     = sensor_probe_info->sub_device_id_addr;
+		s_ctrl->expected_sub_device_id = sensor_probe_info->expected_sub_device_id;
+
 	} else if (probe_ver == CAM_SENSOR_PACKET_OPCODE_SENSOR_PROBE_V2) {
 		sensor_probe_info_v2 = (struct cam_cmd_probe_v2 *)probe_info;
 		s_ctrl->sensordata->slave_info.sensor_id_reg_addr =
@@ -695,6 +703,13 @@ int32_t cam_sensor_update_slave_info(void *probe_info,
 			sensor_probe_info_v2->addr_type;
 		s_ctrl->sensor_probe_data_type =
 			sensor_probe_info_v2->data_type;
+
+		s_ctrl->probe_sub_device       =  sensor_probe_info_v2->probe_sub_device;
+		s_ctrl->sub_device_addr        =  sensor_probe_info_v2->sub_device_addr;
+		s_ctrl->sub_device_data_type   =  sensor_probe_info_v2->sub_device_data_type;
+		s_ctrl->sub_device_addr_type   =  sensor_probe_info_v2->sub_device_addr_type;
+		s_ctrl->sub_device_id_addr     =  sensor_probe_info_v2->sub_device_id_addr;
+		s_ctrl->expected_sub_device_id =  sensor_probe_info_v2->expected_sub_device_id;
 
 		memcpy(s_ctrl->sensor_name, sensor_probe_info_v2->sensor_name,
 			CAM_SENSOR_NAME_MAX_SIZE-1);
@@ -1055,6 +1070,92 @@ int cam_sensor_match_id(struct cam_sensor_ctrl_t *s_ctrl)
 	return rc;
 }
 
+int cam_sensor_match_sub_device_id(struct cam_sensor_ctrl_t *s_ctrl)
+{
+	int rc = 0;
+	uint32_t sub_device_id = 0;
+	uint16_t sensor_address = 0;
+#ifdef CONFIG_CAM_SENSOR_PROBE_DEBUG
+	int retries = 5;
+	bool matched = false;
+#endif
+
+	/* if hal doesn't config ProbeSubDevice parameter in sensor xml, return success immediately */
+	if (!s_ctrl->probe_sub_device) {
+		return 0;
+	}
+
+	/* save sensor i2c address */
+	sensor_address = s_ctrl->io_master_info.cci_client->sid;
+
+	/* set sub-device i2c address */
+	if (s_ctrl->sub_device_addr) {
+		s_ctrl->io_master_info.cci_client->sid = s_ctrl->sub_device_addr >> 1;
+	}
+
+#ifdef CONFIG_CAM_SENSOR_PROBE_DEBUG
+	while (retries-- && !matched) {
+		rc = camera_io_dev_read(
+		&(s_ctrl->io_master_info),
+		s_ctrl->sub_device_id_addr,
+		&sub_device_id,
+		s_ctrl->sub_device_addr_type,
+		s_ctrl->sub_device_data_type,true);
+
+	  CAM_INFO(CAM_SENSOR, "Read sub device id: 0x%x, expected sub device id: 0x%x, sub device id_addr: 0x%x",
+		sub_device_id, s_ctrl->expected_sub_device_id,s_ctrl->sub_device_id_addr);
+
+	  if (sub_device_id == s_ctrl->expected_sub_device_id) {
+		  CAM_INFO(CAM_SENSOR,
+			"Probe sub device success,slot:%d,sub_device_addr:0x%x,sub_device_id:0x%x",
+			s_ctrl->soc_info.index,
+			s_ctrl->sub_device_addr,
+			s_ctrl->expected_sub_device_id);
+      matched = true;
+		  rc = 0;
+	  }
+	  else {
+		  CAM_ERR(CAM_SENSOR, "Probe sub device fail");
+		  rc = -EINVAL;
+	  }
+
+    if (!matched && !retries) {
+			CAM_ERR(CAM_SENSOR, "Failed %s read id: 0x%x expected id 0x%x:",
+					s_ctrl->sensor_name, sub_device_id,
+					s_ctrl->expected_sub_device_id);
+					return -ENODEV;
+		}
+	}
+#else
+	rc = camera_io_dev_read(
+		&(s_ctrl->io_master_info),
+		s_ctrl->sub_device_id_addr,
+		&sub_device_id,
+		s_ctrl->sub_device_addr_type,
+		s_ctrl->sub_device_data_type,true);
+
+	CAM_INFO(CAM_SENSOR, "Read sub device id: 0x%x, expected sub device id: 0x%x, sub device id_addr: 0x%x",
+		sub_device_id, s_ctrl->expected_sub_device_id,s_ctrl->sub_device_id_addr);
+
+	if (sub_device_id == s_ctrl->expected_sub_device_id) {
+		CAM_INFO(CAM_SENSOR,
+			"Probe sub device success,slot:%d,sub_device_addr:0x%x,sub_device_id:0x%x",
+			s_ctrl->soc_info.index,
+			s_ctrl->sub_device_addr,
+			s_ctrl->expected_sub_device_id);
+		  rc = 0;
+	}
+	else {
+		CAM_ERR(CAM_SENSOR, "Probe sub device fail");
+		rc = -EINVAL;
+	}
+#endif
+	/* restore sensor i2c address */
+	s_ctrl->io_master_info.cci_client->sid = sensor_address;
+
+	return rc;
+}
+
 int cam_sensor_stream_off(struct cam_sensor_ctrl_t *s_ctrl)
 {
 	int               rc = 0;
@@ -1273,6 +1374,18 @@ int32_t cam_sensor_driver_cmd(struct cam_sensor_ctrl_t *s_ctrl,
 				s_ctrl->soc_info.index,
 				s_ctrl->sensordata->slave_info.sensor_slave_addr,
 				s_ctrl->sensordata->slave_info.sensor_id);
+			cam_sensor_power_down(s_ctrl);
+			goto free_power_settings;
+		}
+
+		/* Match sub-device ID */
+		rc = cam_sensor_match_sub_device_id(s_ctrl);
+		if (rc < 0) {
+			CAM_INFO(CAM_SENSOR,
+			"Probe sub device failed,slot:%d,sub_device_addr:0x%x,sub_device_id:0x%x",
+			s_ctrl->soc_info.index,
+			s_ctrl->sub_device_addr,
+			s_ctrl->expected_sub_device_id);
 			cam_sensor_power_down(s_ctrl);
 			goto free_power_settings;
 		}
