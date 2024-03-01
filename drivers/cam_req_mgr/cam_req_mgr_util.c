@@ -414,6 +414,7 @@ static int cam_destroy_hdl(int32_t dev_hdl, int dev_hdl_type)
 	int type;
 
 	spin_lock_bh(&hdl_tbl_lock);
+	CAM_ERR(CAM_CRM, "hdl_tbl_lock lock %d", dev_hdl_type);
 	if (!hdl_tbl) {
 		CAM_ERR(CAM_CRM, "Hdl tbl is NULL");
 		goto destroy_hdl_fail;
@@ -446,6 +447,7 @@ static int cam_destroy_hdl(int32_t dev_hdl, int dev_hdl_type)
 	hdl_tbl->hdl[idx].priv  = NULL;
 	clear_bit(idx, hdl_tbl->bitmap);
 	spin_unlock_bh(&hdl_tbl_lock);
+	CAM_ERR(CAM_CRM, "hdl_tbl_lock unlock %d", dev_hdl_type);
 
 	return 0;
 
