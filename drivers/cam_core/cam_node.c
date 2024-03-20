@@ -455,10 +455,6 @@ static int __cam_node_handle_release_dev(struct cam_node *node,
 		return -EINVAL;
 	}
 
-	CAM_ERR(CAM_CORE, "[%s] Release ctx_id=%d, refcount=%d end",
-        node->name, ctx->ctx_id,
-        atomic_read(&(ctx->refcount.refcount.refs)));
-
 	if (ctx->state > CAM_CTX_UNINIT && ctx->state < CAM_CTX_STATE_MAX) {
 		rc = cam_context_handle_release_dev(ctx, release);
 		if (rc)
@@ -481,7 +477,7 @@ destroy_dev_hdl:
 	else
 		ctx->dev_hdl = -1;
 
-	CAM_ERR(CAM_CORE, "[%s] Release ctx_id=%d, refcount=%d start",
+	CAM_DBG(CAM_CORE, "[%s] Release ctx_id=%d, refcount=%d",
 		node->name, ctx->ctx_id,
 		atomic_read(&(ctx->refcount.refcount.refs)));
 
