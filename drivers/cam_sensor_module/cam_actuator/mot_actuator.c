@@ -339,6 +339,7 @@ static mot_reset_lens_step lens_reset_table[RESET_LENS_MAX_STAGES] = {
 };
 
 static bool runtime_inited = 0;
+static bool mot_actuator_driver_probed = false;
 
 static int mot_actuator_init_runtime(void)
 {
@@ -1363,30 +1364,34 @@ static void mot_actuator_platform_shutdown(struct platform_device *pdev)
 	unsigned int consumers = 0;
 	int actuatorUsers = 0;
 	ktime_t start,end,duration;
-	mutex_lock(&mot_actuator_fctrl.actuator_lock);
-	consumers = mot_actuator_get_consumers();
-	/*Only reset lens when vibrator in consumer list*/
-	if ((consumers & CLINET_VIBRATOR_MASK) != 0) {
-		actuatorUsers = mot_actuator_put(ACTUATOR_CLIENT_VIBRATOR);
-		start = ktime_get();
-		if (mot_actuator_state >= MOT_ACTUATOR_INITED && mot_actuator_state < MOT_ACTUATOR_RELEASED) {
-			mot_actuator_power_off(0);
-			mot_actuator_release_cci(0);
-			if (mot_dev_list[mot_device_index].actuator_info[0].has_ois) {
-				mot_ois_stop_protection(&mot_actuator_fctrl.v4l2_dev_str.pdev->dev);
+	if (mot_actuator_driver_probed == true) {
+		mutex_lock(&mot_actuator_fctrl.actuator_lock);
+		consumers = mot_actuator_get_consumers();
+		/*Only reset lens when vibrator in consumer list*/
+		if ((consumers & CLINET_VIBRATOR_MASK) != 0) {
+			actuatorUsers = mot_actuator_put(ACTUATOR_CLIENT_VIBRATOR);
+			start = ktime_get();
+			if (mot_actuator_state >= MOT_ACTUATOR_INITED && mot_actuator_state < MOT_ACTUATOR_RELEASED) {
+				mot_actuator_power_off(0);
+				mot_actuator_release_cci(0);
+				if (mot_dev_list[mot_device_index].actuator_info[0].has_ois) {
+					mot_ois_stop_protection(&mot_actuator_fctrl.v4l2_dev_str.pdev->dev);
+				}
 			}
+			mot_actuator_state = MOT_ACTUATOR_RELEASED;
+			end = ktime_get();
+			duration = ktime_sub(end, start);
+			duration /= 1000;
+			CAM_WARN(CAM_ACTUATOR, "reset lens delay: %dus", duration);
 		}
-		mot_actuator_state = MOT_ACTUATOR_RELEASED;
-		end = ktime_get();
-		duration = ktime_sub(end, start);
-		duration /= 1000;
-		CAM_WARN(CAM_ACTUATOR, "reset lens delay: %dus", duration);
+		mot_actuator_uninit_runtime();
+		if (mot_dev_list[mot_device_index].actuator_info[0].has_ois) {
+			mot_ois_handle_shut_down(&mot_actuator_fctrl.v4l2_dev_str.pdev->dev);
+		}
+		mutex_unlock(&mot_actuator_fctrl.actuator_lock);
 	}
-	mot_actuator_uninit_runtime();
-	if (mot_dev_list[mot_device_index].actuator_info[0].has_ois) {
-		mot_ois_handle_shut_down(&mot_actuator_fctrl.v4l2_dev_str.pdev->dev);
-	}
-	mutex_unlock(&mot_actuator_fctrl.actuator_lock);
+
+	mot_actuator_driver_probed = false;
 	return;
 }
 
@@ -1402,8 +1407,12 @@ static int32_t mot_actuator_driver_platform_probe(
 
 	CAM_DBG(CAM_ACTUATOR, "Adding sensor actuator component");
 	rc = component_add(&pdev->dev, &mot_actuator_component_ops);
-	if (rc)
+	if (rc) {
+		mot_actuator_driver_probed = false;
 		CAM_ERR(CAM_ICP, "failed to add component rc: %d", rc);
+	} else {
+		mot_actuator_driver_probed = true;
+	}
 
 	return rc;
 }
