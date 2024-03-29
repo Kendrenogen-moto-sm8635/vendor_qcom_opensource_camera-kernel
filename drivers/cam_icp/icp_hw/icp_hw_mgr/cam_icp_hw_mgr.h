@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 #ifndef CAM_ICP_HW_MGR_H
@@ -44,7 +44,7 @@
 
 /* size of buffer to drain from msg/dbq queue */
 #define ICP_MSG_BUF_SIZE_IN_WORDS 512
-#define ICP_DBG_BUF_SIZE_IN_WORDS 25600
+#define ICP_DBG_BUF_SIZE_IN_WORDS 5120
 
 #define ICP_OVER_CLK_THRESHOLD  5
 #define ICP_TWO_DEV_BW_SHARE_RATIO 2
