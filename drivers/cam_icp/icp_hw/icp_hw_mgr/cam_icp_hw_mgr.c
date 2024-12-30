@@ -3034,6 +3034,53 @@ static void cam_icp_mgr_process_dbg_buf(struct cam_icp_hw_mgr *hw_mgr)
 	} while (read_in_words >= buf_word_size);
 }
 
+static int cam_icp_mgr_process_feature_property_ack(
+	struct cam_icp_hw_mgr *hw_mgr, uint32_t *msg_ptr)
+{
+	struct hfi_msg_init_done *init_done_ptr = (struct hfi_msg_init_done *)msg_ptr;
+	struct hfi_sys_camera_icp_fw_features *fw_features_ptr;
+	uint32_t *property_data_ptr = NULL;
+
+	CAM_DBG(CAM_ICP, "[%s] received num_props: %d", hw_mgr->hw_mgr_name,
+							init_done_ptr->num_prop);
+	property_data_ptr = &init_done_ptr->prop_data[0];
+	for (uint8_t i = 0; i < init_done_ptr->num_prop; i++) {
+		/*
+		 * ICP FW issues 1 property (HFI_PROP_SYS_SUPPORTED) by default.
+		 * This data is not used.
+		 * However, on few platforms (like, MilosIOT),
+		 * FW appends second property HFI_PROPERTY_SYS_ICP_FEATURE_SUPPORTED
+		 * check if this second property is set.
+		 */
+		switch (*property_data_ptr) {
+		case HFI_PROP_SYS_SUPPORTED:
+			CAM_DBG(CAM_ICP,
+				"[%s] skip to next property based on this property size",
+				hw_mgr->hw_mgr_name);
+			property_data_ptr = (uint32_t *)((uint8_t *)((struct hfi_sys_support *)
+						(init_done_ptr->prop_data + 1)) +
+						sizeof(struct hfi_sys_support));
+			break;
+
+		case HFI_PROP_SYS_ICP_FEATURE_SUPPORTED:
+			fw_features_ptr = (struct hfi_sys_camera_icp_fw_features *)
+						(property_data_ptr + 1);
+			hw_mgr->fw_feature_mask = fw_features_ptr->feature_mask;
+			CAM_DBG(CAM_ICP, "[%s] received fw_feature_mask: %d",
+					hw_mgr->hw_mgr_name, hw_mgr->fw_feature_mask);
+			break;
+
+		default:
+			CAM_DBG(CAM_ICP,
+				"[%s] HFI_MSG_SYS_ICP_FEATUREMASK_ACK property not set.	default fw_feature_mask to zero",
+				hw_mgr->hw_mgr_name);
+			hw_mgr->fw_feature_mask = 0;
+			break;
+		}
+	}
+	return 0;
+}
+
 static int cam_icp_process_msg_pkt_type(
 	struct cam_icp_hw_mgr *hw_mgr,
 	uint32_t *msg_ptr)
@@ -3043,6 +3090,7 @@ static int cam_icp_process_msg_pkt_type(
 	switch (msg_ptr[ICP_PACKET_TYPE]) {
 	case HFI_MSG_SYS_INIT_DONE:
 		CAM_DBG(CAM_ICP, "[%s] received SYS_INIT_DONE", hw_mgr->hw_mgr_name);
+		rc = cam_icp_mgr_process_feature_property_ack(hw_mgr, msg_ptr);
 		complete(&hw_mgr->icp_complete);
 		break;
 
@@ -7613,6 +7661,9 @@ static int cam_icp_mgr_get_hw_caps_v2(void *hw_mgr_priv, void *hw_caps_args)
 
 	query_cmd.dev_iommu_handle.non_secure = hw_mgr->iommu_hdl;
 	query_cmd.dev_iommu_handle.secure = hw_mgr->iommu_sec_hdl;
+
+	/* update params section with caps_v2 values */
+	query_cmd.params[0] = hw_mgr->fw_feature_mask;
 
 	if (copy_to_user(u64_to_user_ptr(query_cap->caps_handle),
 		&query_cmd, sizeof(struct cam_icp_query_cap_cmd_v2))) {

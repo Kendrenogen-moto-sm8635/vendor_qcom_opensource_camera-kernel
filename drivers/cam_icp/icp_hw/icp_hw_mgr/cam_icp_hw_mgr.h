@@ -461,6 +461,7 @@ struct cam_icp_hw_ctx_data {
  * @disable_ubwc_comp: Disable UBWC compression
  * @synx_signaling_en: core to core fencing is enabled
  *                     using synx
+ * @fw_feature_mask: indicate ICP FW feature mask
  */
 struct cam_icp_hw_mgr {
 	struct mutex hw_mgr_mutex;
@@ -511,6 +512,7 @@ struct cam_icp_hw_mgr {
 	bool icp_jtag_debug;
 	bool disable_ubwc_comp;
 	bool synx_signaling_en;
+	uint32_t fw_feature_mask;
 };
 
 /**
